@@ -67,4 +67,16 @@ var_dump($sql);
         //
         return redirect('/task/list');
     }
+    
+    public function detail($task_id){
+        $task = TaskModel::find($task_id);
+        if($task=== null){
+            return redirect('/task/list');
+        }
+        if($task->user_id !== Auth::id()){
+            return redirect('/task/list');
+        }
+        //var_dump($task);exit;
+        return view('task.detail', ['task' => $task]);
+    }
 }
