@@ -171,15 +171,21 @@ var_dump($sql);
         return redirect('/task/list');
     }
     
-    public function complete($task_id){
-        try{
+    public function complete(Request $request, $task_id)
+    {
+        /* タスクを完了テーブルに移動させる */
+        try {
+            // トランザクション開始
             DB::beginTransaction();
+
+            // task_idのレコードを取得する
             $task = $this->getTaskModel($task_id);
-             if ($task === null) {
+            if ($task === null) {
                 // task_idが不正なのでトランザクション終了
-               throw new \Exception('');
+                throw new \Exception('');
             }
-            
+
+            // tasks側を削除する
             $task->delete();
 //var_dump($task->toArray()); exit;
 
@@ -192,17 +198,80 @@ var_dump($sql);
                 // insertで失敗したのでトランザクション終了
                 throw new \Exception('');
             }
-echo '処理成功'; exit;
-            // var_dump($task->toArray()); exit;
-                 // トランザクション終了
+//echo '処理成功'; exit;
+
+            // トランザクション終了
             DB::commit();
+            // 完了メッセージ出力
+            $request->session()->flash('front.task_completed_success', true);
         } catch(\Throwable $e) {
-var_dump($e->getMessage()); exit;
+//var_dump($e->getMessage()); exit;
             // トランザクション異常終了
             DB::rollBack();
+            // 完了失敗メッセージ出力
+            $request->session()->flash('front.task_completed_failure', true);
         }
 
         // 一覧に遷移する
         return redirect('/task/list');
     }
+    
+    public function csvDownload()
+    {
+        $data_list = [
+            'id' => 'タスクID',
+            'name' => 'タスク名',
+            'priority' => '重要度',
+            'period' => '期限',
+            'detail' => 'タスク詳細',
+            'created_at' => 'タスク作成日',
+            'updated_at' => 'タスク修正日',
+        ];
+        /* 「ダウンロードさせたいCSV」を作成する */
+        // データを取得する
+        $list = $this->getListBuilder()->get();
+
+        // バッファリングを開始
+        ob_start();
+
+        // 「書き込み先を"出力"にした」ファイルハンドルを作成する
+        $file = new \SplFileObject('php://output', 'w');
+        
+        $file->fputcsv(array_values($data_list));
+        // CSVをファイルに書き込む(出力する)
+        foreach($list as $datum) {
+            $awk = []; // 作業領域の確保
+            foreach($data_list as $k => $v) {
+               if ($k === 'priority') {
+                    $awk[] = $datum->getPriorityString();
+                } else {
+                    $awk[] = $datum->$k;
+                }
+            }
+            // CSVの1行を出力
+            $file->fputcsv($awk);
+        }
+
+        // 現在のバッファの中身を取得し、出力バッファを削除する
+        $csv_string = ob_get_clean();
+
+        // 文字コードを変換する
+        $csv_string_sjis = mb_convert_encoding($csv_string, 'SJIS', 'UTF-8');
+
+
+        $download_filename = 'task_list.' . date('Ymd') . '.csv';
+        // CSVを出力する
+        return response($csv_string_sjis)
+                ->header('Content-Type', 'text/csv')
+                ->header('Content-Disposition', 'attachment; filename="test.csv"');
+    }
+    
+     protected function getListBuilder()
+    {
+        return TaskModel::where('user_id', Auth::id())
+                     ->orderBy('priority', 'DESC')
+                     ->orderBy('period')
+                     ->orderBy('created_at');
+    }
+
 }

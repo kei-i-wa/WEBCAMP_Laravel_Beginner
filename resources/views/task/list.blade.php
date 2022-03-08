@@ -5,7 +5,13 @@
 
 
 @section('contents')
-       <h1>タスクの登録(未実装)</h1>
+       <h1>タスクの登録</h1>
+            @if (session('front.task_completed_success') == true)
+                タスクを完了にしました！！<br>
+            @endif
+            @if (session('front.task_completed_failure') == true)
+                タスクの完了に失敗しました....<br>
+            @endif
             @if (session('front.task_register_success') == true)
                 タスクを登録しました！！<br>
             @endif
@@ -31,7 +37,7 @@
             </form>
 
         <h1>タスクの一覧(未実装)</h1>
-        <a href="./top.html">CSVダウンロード(未実装)</a><br>
+        <a href="/task/csv/download">CSVダウンロード</a><br>
         <table border="1">
         @foreach ($list as $task)
         <tr>
