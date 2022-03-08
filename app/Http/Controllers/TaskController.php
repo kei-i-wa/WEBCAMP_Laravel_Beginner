@@ -6,8 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TaskRegisterPostRequest;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Task as TaskModel;
-
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Models\CompletedTask as CompletedTaskModel;
 
 
 class TaskController extends Controller
@@ -159,4 +160,49 @@ var_dump($sql);
         return redirect(route('detail', ['task_id' => $task->id]));
     }
 
+    public function delete(Request $request, $task_id){
+        //レコードの取得
+        $task =$this->getTaskModel($task_id);
+        //タスクを削除する
+       if ($task !== null) {
+            $task->delete();
+            $request->session()->flash('front.task_delete_success', true);
+        }
+        return redirect('/task/list');
+    }
+    
+    public function complete($task_id){
+        try{
+            DB::beginTransaction();
+            $task = $this->getTaskModel($task_id);
+             if ($task === null) {
+                // task_idが不正なのでトランザクション終了
+               throw new \Exception('');
+            }
+            
+            $task->delete();
+//var_dump($task->toArray()); exit;
+
+            // completed_tasks側にinsertする
+            $dask_datum = $task->toArray();
+            unset($dask_datum['created_at']);
+            unset($dask_datum['updated_at']);
+            $r = CompletedTaskModel::create($dask_datum);
+            if ($r === null) {
+                // insertで失敗したのでトランザクション終了
+                throw new \Exception('');
+            }
+echo '処理成功'; exit;
+            // var_dump($task->toArray()); exit;
+                 // トランザクション終了
+            DB::commit();
+        } catch(\Throwable $e) {
+var_dump($e->getMessage()); exit;
+            // トランザクション異常終了
+            DB::rollBack();
+        }
+
+        // 一覧に遷移する
+        return redirect('/task/list');
+    }
 }
