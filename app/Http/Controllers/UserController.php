@@ -32,11 +32,11 @@ class UserController extends Controller
         $datum['password'] = Hash::make($datum['password']);
         try{
             $r= UserModel::create($datum);
+            $request->session()->flash('front.user_register_success',true);
         }catch(\Throwable $e){
-            echo $e->getMessage();
-            exit;
+            // echo $e->getMessage();
+            $request->session()->flash('front.user_register_failure', true);
         }
-        $request->session()->flash('front.user_register_success',true);
         return redirect('/');
     }
 

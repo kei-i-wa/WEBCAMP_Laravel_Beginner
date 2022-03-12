@@ -7,9 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class CompletedTask extends Model
 {
+        protected $fillable = [
+        'name',
+        'period',
+        'priority',
+        'id',
+        'detail',
+        'user_id',
+    ];
+    
+    
     use HasFactory;
     
-    protected $guarded = ['id'];
     
     const PRIORITY_VALUE = [
         1 => '低い',

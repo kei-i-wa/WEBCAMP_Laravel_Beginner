@@ -3,6 +3,9 @@
     @if(session('front.user_register_success')==true)
     ユーザーを登録しました。<br>
     @endif
+    @if(session('front.user_register_failure')==true)
+        ユーザー登録に失敗しました。<br>
+    @endif
     @if($errors->any())
     <div>
         @foreach ($errors ->all() as $error)
