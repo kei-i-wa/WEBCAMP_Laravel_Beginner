@@ -22,7 +22,7 @@ class TaskRegisterPostRequest extends FormRequest
      */
     public function rules()
     {
-return [
+        return [
             'name' => ['required', 'max:128'],
             'period' => ['required', 'date', 'after_or_equal:today'],
             'detail' => ['max:65535'],

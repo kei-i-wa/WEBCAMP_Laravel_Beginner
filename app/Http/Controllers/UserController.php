@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Requests\UserRegisterPost;
 use App\Models\User as UserModel;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -28,27 +29,15 @@ class UserController extends Controller
     public function register(UserRegisterPost $request)
     {
         $datum = $request->validated();
+        $datum['password'] = Hash::make($datum['password']);
         try{
             $r= UserModel::create($datum);
-            // var_dump($r); exit;
         }catch(\Throwable $e){
             echo $e->getMessage();
             exit;
         }
-        
-        
-
-        // // 認証
-        // if (Auth::attempt($datum) === false) {
-        //     return back()
-        //           ->withInput() // 入力値の保持
-        //           ->withErrors(['auth' => 'emailかパスワードに誤りがあります。',]) // エラーメッセージの出力
-        //           ;
-        // }
-
-        // //
-        // $request->session()->regenerate();
-        // return redirect()->intended('/task/list');
+        $request->session()->flash('front.user_register_success',true);
+        return redirect('/');
     }
 
     /**
